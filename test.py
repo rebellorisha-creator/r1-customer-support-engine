@@ -9,10 +9,8 @@ with open("q_table.pkl", "rb") as f:
 def get_q(state, action):
     return Q.get((state, action), 0.0)
 
-episodes = 5
-
-for ep in range(episodes):
-    state = env.reset()
+def run_query(query):
+    state = env.reset(query)
     done = False
 
     while not done:
@@ -20,3 +18,9 @@ for ep in range(episodes):
         action = ACTIONS[qs.index(max(qs))]
 
         state, reward, done = env.step(action)
+
+    return {
+        "state": state,
+        "action": action,
+        "reward": reward
+    }

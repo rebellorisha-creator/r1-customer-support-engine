@@ -25,9 +25,9 @@ SAMPLE_QUERIES = [
 def get_state(query):
     q = query.lower()
 
-    sentiment = "angry" if "upset" in q or "refund" in q else "neutral"
+    sentiment = "angry" if any(word in q for word in ["upset", "refund", "angry"]) else "neutral"
     urgency = "high" if "urgent" in q or "now" in q else "medium"
-    complexity = "complex" if "failed" in q or "crashing" in q else "simple"
+    complexity = "complex" if any(word in q for word in ["failed", "crashing", "crashed"]) else "simple"
 
     return sentiment, urgency, complexity
 
@@ -35,19 +35,26 @@ def get_state(query):
 class CustomerSupportEnv:
     def __init__(self):
         self.max_steps = 3
-
-    def reset(self):
-        self.query = random.choice(SAMPLE_QUERIES)
         self.step_count = 0
         self.prev_action = "NONE"
         self.done = False
+        self.query = ""
+        self.state = None
 
-        self.state = (*get_state(self.query), self.step_count, self.prev_action)
+    def reset(self, query=None):
+          if query:
+              self.query = query
+          else:
+              self.query = random.choice(SAMPLE_QUERIES)
 
-        print(f"\nQuery: {self.query}")
-        print(f"State: {self.state}")
+    # ✅ ALWAYS initialize
+          self.step_count = 0
+          self.prev_action = "NONE"
+          self.done = False
 
-        return self.state
+          self.state = (*get_state(self.query), self.step_count, self.prev_action)
+
+          return self.state
 
     def step(self, action):
         self.step_count += 1
