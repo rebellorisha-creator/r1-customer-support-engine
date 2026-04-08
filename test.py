@@ -1,30 +1,28 @@
-import pickle
 from environment import CustomerSupportEnv, ACTIONS
+import pickle
 
+# Load trained Q-table
 with open("q_table.pkl", "rb") as f:
     Q = pickle.load(f)
-
-env = CustomerSupportEnv()
-
-query = input("Enter query: ")
-
-state = env.reset(query)
-done = False
-
 
 def get_q(state, action):
     return Q.get((state, action), 0)
 
-
-while not done:
+def choose_best_action(state):
     q_values = [get_q(state, a) for a in ACTIONS]
-    action = ACTIONS[q_values.index(max(q_values))]
+    max_q = max(q_values)
+    best_actions = [a for a, q in zip(ACTIONS, q_values) if q == max_q]
+    return best_actions[0]
 
-    next_state, reward, done = env.step(action)
+def run_query(query):
+    env = CustomerSupportEnv()
+    state = env.reset(query)
 
-    print(f"Action: {action} | Reward: {reward}")
+    action = choose_best_action(state)
+    next_state, reward,done, _= env.step(action)
 
-    state = next_state
-
-print("\nDecision:", action)
-print("Final State:", state)
+    return {
+        "state": state,
+        "action": action,
+        "reward": reward
+    }
