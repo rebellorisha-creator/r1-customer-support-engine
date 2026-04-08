@@ -1,6 +1,5 @@
 import pickle
 import random
-import matplotlib.pyplot as plt
 from environment import CustomerSupportEnv, ACTIONS
 
 env = CustomerSupportEnv()
@@ -57,9 +56,3 @@ with open("q_table.pkl", "wb") as f:
 
 print("Training complete. Model saved.")
 
-# 📈 Plot graph
-plt.plot(rewards_per_episode)
-plt.title("Training Reward Over Time")
-plt.xlabel("Episodes")
-plt.ylabel("Reward")
-plt.show()
