@@ -2,7 +2,7 @@ import os
 from openai import OpenAI
 from test import run_query
 
-# ✅ Dummy OpenAI client (for requirement compliance)
+#  Dummy OpenAI client (for requirement compliance)
 client = OpenAI(
     base_url=os.getenv("API_BASE_URL", "dummy"),
     api_key=os.getenv("HF_TOKEN", "dummy")
