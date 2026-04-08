@@ -84,7 +84,7 @@ class CustomerSupportEnv:
                 return self.state, -20, True, {}
 
         # -------------------------
-        # 🔥 MANAGER / ESCALATION CASE
+        #  MANAGER / ESCALATION CASE
         # -------------------------
         if "manager" in query or issue_type == "escalation":
             if action in ["ESCALATE", "HUMAN"]:
@@ -94,7 +94,7 @@ class CustomerSupportEnv:
                 reward -= 10
 
         # -------------------------
-        # 😡 ANGRY USER
+        #  ANGRY USER
         # -------------------------
         elif sentiment == "angry":
             if action == "ESCALATE":
@@ -110,7 +110,7 @@ class CustomerSupportEnv:
                 reward -= 5
 
         # -------------------------
-        # 🧠 COMPLEX ISSUE
+        #  COMPLEX ISSUE
         # -------------------------
         elif complexity == "complex":
             if action in ["HUMAN", "ESCALATE"]:
@@ -123,7 +123,7 @@ class CustomerSupportEnv:
                 reward -= 3
 
         # -------------------------
-        # 🙂 SIMPLE ISSUE
+        #  SIMPLE ISSUE
         # -------------------------
         else:
             if action == "AI":
