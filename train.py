@@ -19,30 +19,54 @@ def get_q(state, action):
 
 
 for episode in range(episodes):
-    state = env.reset()
-    total_reward = 0
-    done = False
+    query = random.choice([
+    "I want a refund",
+    "My app crashed",
+    "Where is my order",
+    "This is terrible service fix this now",
+    "Fix this now",
+    "I am happy with the service",
+    "Payment failed",
+    "I want to talk to manager"
 
-    while not done:
+])
+queries = [
+    "I want a refund",
+    "My app crashed",
+    "Where is my order",
+    "This is terrible service, fix this now!",
+    "I am very angry with this",
+    "Worst experience ever",
+    "Payment failed",
+    "I want to talk to manager",
+    "Fix this immediately",
+]
 
-        if random.random() < epsilon:
+state = env.reset(query)
+total_reward = 0
+done = False
+
+while not done:
+
+    if random.random() < epsilon:
             action = random.choice(ACTIONS)
-        else:
+    else:
             q_values = [get_q(state, a) for a in ACTIONS]
             max_q = max(q_values)
             best_actions = [a for a, q in zip(ACTIONS, q_values) if q == max_q]
             action = random.choice(best_actions)
 
-        next_state, reward, done = env.step(action)
 
-        old_q = get_q(state, action)
-        next_max = max([get_q(next_state, a) for a in ACTIONS])
+    next_state, reward, done, _ = env.step(action)
 
-        new_q = old_q + alpha * (reward + gamma * next_max - old_q)
-        Q[(state, action)] = new_q
+    old_q = get_q(state, action)
+    next_max = max([get_q(next_state, a) for a in ACTIONS])
 
-        state = next_state
-        total_reward += reward
+    new_q = old_q + alpha * (reward + gamma * next_max - old_q)
+    Q[(state, action)] = new_q
+
+    state = next_state
+    total_reward += reward
 
     epsilon = max(epsilon_min, epsilon * epsilon_decay)
 

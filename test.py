@@ -1,5 +1,5 @@
-import pickle
 from environment import CustomerSupportEnv, ACTIONS
+import pickle
 
 # Load Q-table
 with open("q_table.pkl", "rb") as f:
@@ -23,7 +23,18 @@ def run_query(query):
         q_values = [get_q(state, a) for a in ACTIONS]
         action = ACTIONS[q_values.index(max(q_values))]
 
-        next_state, reward, done = env.step(action)
+        # ----------------------------
+        # 🔥 RULE-BASED FIX (IMPORTANT)
+        # ----------------------------
+        sentiment, urgency, complexity = state[0], state[1], state[2]
+
+        if sentiment == "angry" and complexity == "complex":
+            action = "ESCALATE"   # override RL decision
+
+        # ----------------------------
+        # STEP
+        # ----------------------------
+        next_state, reward, done, _ = env.step(action)
 
         final_action = action
         final_reward = reward

@@ -1,10 +1,10 @@
 import streamlit as st
 from test import run_query
 
-st.title("🤖 RL-Based Customer Support Decision Engine")
+st.title(" RL-Based Customer Support Decision Engine")
 st.caption("Intelligent system for routing customer queries using Reinforcement Learning")
 
-user_input = st.text_input("💬 Enter customer query:")
+user_input = st.text_input(" Enter customer query:")
 
 if st.button("Analyze"):
 
@@ -26,7 +26,7 @@ if st.button("Analyze"):
         # ----------------------------
         # FEATURES
         # ----------------------------
-        st.subheader("📊 Extracted Features")
+        st.subheader(" Extracted Features")
 
         col1, col2, col3 = st.columns(3)
 
@@ -45,18 +45,18 @@ if st.button("Analyze"):
         st.subheader("⚡ Decision")
 
         if action == "ESCALATE":
-            st.error("🚨 Escalated to higher support")
+            st.error(" Escalated to higher support")
         elif action == "HUMAN":
-            st.warning("👨‍💻 Assigned to human agent")
+            st.warning(" Assigned to human agent")
         elif action == "COMPENSATE":
-            st.info("💰 Compensation offered")
+            st.info(" Compensation offered")
         else:
-            st.success("🤖 Handled by AI")
+            st.success(" Handled by AI")
 
         # ----------------------------
         # REASON
         # ----------------------------
-        st.subheader("🧠 Reason for Decision")
+        st.subheader(" Reason for Decision")
 
         reasons = []
 
@@ -76,9 +76,9 @@ if st.button("Analyze"):
             st.write(f"• {r}")
 
         # ----------------------------
-        # REWARD (✅ FIXED POSITION)
+        # REWARD ( FIXED POSITION)
         # ----------------------------
-        st.subheader("🏆 Reward Signal")
+        st.subheader(" Reward Signal")
 
         st.metric("Reward Score", reward)
 
