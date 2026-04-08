@@ -134,20 +134,7 @@ Early training stages show inconsistent performance
 
 Over time, the agent reduces poor decisions
 
-Reward trends indicate learning and policy improvement
-
-
-
----
-
-Project Structure
-
-.
-├── environment.py   # RL environment definition
-├── train.py         # Training loop with Q-learning
-├── test.py          # Evaluation script
-├── q_table.pkl      # Serialized learned policy
-├── README.md        # Documentation
+Reward trends indicate learning and policy improvement.
 
 
 ---

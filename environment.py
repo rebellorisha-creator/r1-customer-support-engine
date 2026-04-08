@@ -38,11 +38,60 @@ def detect_sentiment(text):
         return "neutral"
 
 
-#  FINAL STATE (FIXED)
+
+
+
+# ----------------------------
+# STATE SPACE
+# ----------------------------
+SENTIMENTS = ["happy", "neutral", "angry"]
+URGENCIES = ["low", "medium", "high"]
+COMPLEXITIES = ["simple", "medium", "complex"]
+
+ACTIONS = ["AI", "HUMAN", "ESCALATE", "COMPENSATE"]
+
+# ----------------------------
+# ACTION COST (REALISM)
+# ----------------------------
+ACTION_COST = {
+    "AI": 0.1,
+    "HUMAN": 0.5,
+    "ESCALATE": 0.7,
+    "COMPENSATE": 1.0
+}
+
+
+
+
+# ----------------------------
+# STATE GENERATION
+# ----------------------------
 def get_state(query):
     q = query.lower()
 
+    #  NLP sentiment
     sentiment = detect_sentiment(query)
+
+    #  Boost strong negative words
+    if any(word in q for word in ["stupid", "useless", "hate", "worst"]):
+        sentiment = "angry"
+
+    # urgency detection
+    if any(word in q for word in ["urgent", "now", "immediately"]):
+        urgency = "high"
+    elif any(word in q for word in ["soon", "asap"]):
+        urgency = "medium"
+    else:
+        urgency = "low"
+
+    # complexity detection
+    if any(word in q for word in ["failed", "crashing", "crashed", "error", "not working"]):
+        complexity = "complex"
+    elif any(word in q for word in ["how", "help", "guide"]):
+        complexity = "medium"
+    else:
+        complexity = "simple"
+
 
     # urgency
     if any(word in q for word in ["urgent", "now", "immediately", "right now", "manager"]):
@@ -75,6 +124,17 @@ def get_state(query):
 class CustomerSupportEnv:
     def __init__(self):
         self.max_steps = 3
+        self.step_count = 0
+        self.prev_action = "NONE"
+        self.done = False
+        self.query = ""
+        self.state = None
+
+    def reset(self, query=None):
+        if query:
+            self.query = query
+        else:
+            self.query = random.choice(SAMPLE_QUERIES)
 
     def reset(self, query=None):
         self.step_count = 0

@@ -3,7 +3,6 @@ import pickle
 from environment import CustomerSupportEnv, ACTIONS
 
 env = CustomerSupportEnv()
-
 Q = {}
 
 alpha = 0.1
