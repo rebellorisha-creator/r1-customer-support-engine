@@ -1,84 +1,148 @@
 import random
-
-SENTIMENTS = ["happy", "neutral", "angry"]
-URGENCIES = ["low", "medium", "high"]
-COMPLEXITIES = ["simple", "medium", "complex"]
+from textblob import TextBlob
 
 ACTIONS = ["AI", "HUMAN", "ESCALATE", "COMPENSATE"]
 
-# 💰 Cost for each action
-ACTION_COST = {
-    "AI": 0.1,
-    "HUMAN": 0.5,
-    "ESCALATE": 0.7,
-    "COMPENSATE": 1.0
-}
-
 SAMPLE_QUERIES = [
-    "My payment failed and I'm upset!",
-    "How to reset password?",
-    "Order not arrived, urgent!",
-    "App keeps crashing!",
-    "I want refund right now!",
+    "I want a refund",
+    "My app crashed",
+    "Where is my order",
+    "This is the worst service",
+    "Fix this now!!!",
+    "I am happy with the service",
+    "My delivery is delayed",
+    "Payment failed",
+    "I need to talk to manager"
 ]
 
+
+#  FINAL SENTIMENT (FIXED)
+def detect_sentiment(text):
+    text = text.lower()
+
+    # Force angry cases
+    if any(word in text for word in [
+        "manager", "complaint", "worst", "angry",
+        "frustrated", "late", "delayed", "not working",
+        "issue", "problem", "bad service"
+    ]):
+        return "angry"
+
+    polarity = TextBlob(text).sentiment.polarity
+
+    if polarity < -0.2:
+        return "angry"
+    elif polarity > 0.3:
+        return "happy"
+    else:
+        return "neutral"
+
+
+#  FINAL STATE (FIXED)
 def get_state(query):
     q = query.lower()
 
-    sentiment = "angry" if "upset" in q or "refund" in q else "neutral"
-    urgency = "high" if "urgent" in q or "now" in q else "medium"
-    complexity = "complex" if "failed" in q or "crashing" in q else "simple"
+    sentiment = detect_sentiment(query)
 
-    return sentiment, urgency, complexity
+    # urgency
+    if any(word in q for word in ["urgent", "now", "immediately", "right now", "manager"]):
+        urgency = "high"
+    elif any(word in q for word in ["soon", "waiting", "delay", "late", "delayed"]):
+        urgency = "medium"
+    else:
+        urgency = "low"
+
+    # complexity
+    if any(word in q for word in ["crash", "error", "failed", "bug"]):
+        complexity = "complex"
+    else:
+        complexity = "simple"
+
+    # issue type
+    if "refund" in q:
+        issue_type = "refund"
+    elif "payment" in q:
+        issue_type = "payment"
+    elif any(word in q for word in ["delivery", "order", "late", "delayed"]):
+        issue_type = "delivery"
+    else:
+        issue_type = "general"
+
+    return sentiment, urgency, complexity, issue_type
 
 
+#  ENVIRONMENT
 class CustomerSupportEnv:
     def __init__(self):
         self.max_steps = 3
 
-    def reset(self):
-        self.query = random.choice(SAMPLE_QUERIES)
+    def reset(self, query=None):
         self.step_count = 0
-        self.prev_action = "NONE"
         self.done = False
 
-        self.state = (*get_state(self.query), self.step_count, self.prev_action)
+        if query:
+            self.query = query
+        else:
+            self.query = random.choice(SAMPLE_QUERIES)
 
-        print(f"\nQuery: {self.query}")
-        print(f"State: {self.state}")
-
+        self.state = (*get_state(self.query), self.step_count)
         return self.state
 
     def step(self, action):
         self.step_count += 1
 
-        # 🎯 Success probability logic
-        sentiment, urgency, complexity, _, _ = self.state
+        sentiment, urgency, complexity, issue_type = get_state(self.query)
 
+        reward = 0
         success = False
 
-        if action == "ESCALATE" and sentiment == "angry":
-            success = True
-        elif action == "AI" and complexity == "simple":
-            success = True
-        elif action == "HUMAN" and complexity == "complex":
-            success = True
-        elif action == "COMPENSATE" and sentiment == "angry":
-            success = True
+        #  ANGRY + HIGH → ESCALATE (VERY STRONG)
+        if sentiment == "angry" and urgency == "high":
+            if action == "ESCALATE":
+                reward += 10
+                success = True
+            else:
+                reward -= 10
+
+        #  DELIVERY → ESCALATE / HUMAN
+        elif issue_type == "delivery":
+            if action == "ESCALATE":
+                reward += 7
+                success = True
+            elif action == "HUMAN":
+                reward += 5
+                success = True
+            else:
+                reward -= 6
+
+        #  PAYMENT → HUMAN / ESCALATE
+        elif issue_type == "payment":
+            if action in ["HUMAN", "ESCALATE"]:
+                reward += 8
+                success = True
+            else:
+                reward -= 7
+
+        #  COMPLEX → HUMAN
+        elif complexity == "complex":
+            if action == "HUMAN":
+                reward += 6
+                success = True
+            else:
+                reward -= 5
+
+        #  SIMPLE → AI
         else:
-            success = random.random() < 0.3  # some randomness
+            if action == "AI":
+                reward += 3
+                success = True
+            else:
+                reward -= 2
 
-        # 💰 Reward = success - cost
-        reward = (1 if success else -1) - ACTION_COST[action]
-
-        print(f"Action: {action} | Success: {success} | Reward: {round(reward,2)}")
-
-        self.prev_action = action
-
-        # next state
-        self.state = (*get_state(self.query), self.step_count, self.prev_action)
-
+        # stop episode
         if success or self.step_count >= self.max_steps:
             self.done = True
 
-        return self.state, round(reward, 2), self.done
+        self.state = (*get_state(self.query), self.step_count, action)
+
+        return self.state, reward, self.done

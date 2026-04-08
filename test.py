@@ -1,22 +1,30 @@
 import pickle
 from environment import CustomerSupportEnv, ACTIONS
 
-env = CustomerSupportEnv()
-
 with open("q_table.pkl", "rb") as f:
     Q = pickle.load(f)
 
+env = CustomerSupportEnv()
+
+query = input("Enter query: ")
+
+state = env.reset(query)
+done = False
+
+
 def get_q(state, action):
-    return Q.get((state, action), 0.0)
+    return Q.get((state, action), 0)
 
-episodes = 5
 
-for ep in range(episodes):
-    state = env.reset()
-    done = False
+while not done:
+    q_values = [get_q(state, a) for a in ACTIONS]
+    action = ACTIONS[q_values.index(max(q_values))]
 
-    while not done:
-        qs = [get_q(state, a) for a in ACTIONS]
-        action = ACTIONS[qs.index(max(qs))]
+    next_state, reward, done = env.step(action)
 
-        state, reward, done = env.step(action)
+    print(f"Action: {action} | Reward: {reward}")
+
+    state = next_state
+
+print("\nDecision:", action)
+print("Final State:", state)
