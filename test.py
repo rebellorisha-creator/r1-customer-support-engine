@@ -24,7 +24,7 @@ def run_query(query):
         action = ACTIONS[q_values.index(max(q_values))]
 
         # ----------------------------
-        # 🔥 RULE-BASED FIX (IMPORTANT)
+        #  RULE-BASED FIX (IMPORTANT)
         # ----------------------------
         sentiment, urgency, complexity = state[0], state[1], state[2]
 
