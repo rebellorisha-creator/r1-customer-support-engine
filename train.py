@@ -1,79 +1,82 @@
 import random
-import pickle
-from environment import CustomerSupportEnv, ACTIONS
+from env import CustomerSupportEnv
 
 env = CustomerSupportEnv()
-Q = {}
 
-alpha = 0.1
-gamma = 0.9
-epsilon = 1.0
-epsilon_decay = 0.999
-epsilon_min = 0.05
-
-episodes = 30000
-
-
-def get_q(state, action):
-    return Q.get((state, action), 0)
-
-
-for episode in range(episodes):
-    query = random.choice([
-    "I want a refund",
-    "My app crashed",
-    "Where is my order",
-    "This is terrible service fix this now",
-    "Fix this now",
-    "I am happy with the service",
-    "Payment failed",
-    "I want to talk to manager"
-
-])
-queries = [
-    "I want a refund",
-    "My app crashed",
-    "Where is my order",
-    "This is terrible service, fix this now!",
-    "I am very angry with this",
-    "Worst experience ever",
-    "Payment failed",
-    "I want to talk to manager",
-    "Fix this immediately",
+ACTIONS = [
+    "auto_reply",
+    "ask_clarification",
+    "escalate",
+    "route_to_sales",
+    "route_to_tech"
 ]
 
-state = env.reset(query)
-total_reward = 0
-done = False
+# Q-table
+Q = {}
 
-while not done:
+# Hyperparameters
+alpha = 0.1   # learning rate
+gamma = 0.9   # future reward importance
+epsilon = 0.2 # exploration
 
+def get_state_key(state):
+    return f"{state['sentiment']}_{state['urgency']}_{state['complexity']}_{state['category']}"
+
+def choose_action(state_key):
+    # explore
     if random.random() < epsilon:
-            action = random.choice(ACTIONS)
-    else:
-            q_values = [get_q(state, a) for a in ACTIONS]
-            max_q = max(q_values)
-            best_actions = [a for a, q in zip(ACTIONS, q_values) if q == max_q]
-            action = random.choice(best_actions)
+        return random.choice(ACTIONS)
+
+    # exploit
+    if state_key not in Q:
+        Q[state_key] = {a: 0 for a in ACTIONS}
+
+    return max(Q[state_key], key=Q[state_key].get)
 
 
-    next_state, reward, done, _ = env.step(action)
+# TRAINING LOOP
+episodes = 1000
 
-    old_q = get_q(state, action)
-    next_max = max([get_q(next_state, a) for a in ACTIONS])
+for episode in range(episodes):
 
-    new_q = old_q + alpha * (reward + gamma * next_max - old_q)
-    Q[(state, action)] = new_q
+    state = env.reset()
+    state_key = get_state_key(state)
 
-    state = next_state
-    total_reward += reward
+    done = False
 
-    epsilon = max(epsilon_min, epsilon * epsilon_decay)
+    while not done:
 
-    if episode % 500 == 0:
-        print(f"Episode {episode} Reward: {round(total_reward, 2)}")
+        action = choose_action(state_key)
 
+        result = env.step(action)
+
+        next_state = result["observation"]
+        reward = result["reward"]
+        done = result["done"]
+
+        next_state_key = get_state_key(next_state)
+
+        # initialize Q values
+        if state_key not in Q:
+            Q[state_key] = {a: 0 for a in ACTIONS}
+
+        if next_state_key not in Q:
+            Q[next_state_key] = {a: 0 for a in ACTIONS}
+
+        # 🔥 Q-learning update
+        Q[state_key][action] = (
+            Q[state_key][action]
+            + alpha * (
+                reward + gamma * max(Q[next_state_key].values())
+                - Q[state_key][action]
+            )
+        )
+
+        state_key = next_state_key
+
+print("Training finished!")
+
+# Save Q-table
+import pickle
 with open("q_table.pkl", "wb") as f:
     pickle.dump(Q, f)
-
-print("Training complete.....")

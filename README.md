@@ -1,277 +1,202 @@
-
-
-RL-Based Customer Support Decision Engine
+RL-Based Customer Support Triage System
 
 Overview
 
-This project presents a Reinforcement Learning (RL) based decision engine designed to optimize customer support workflows. The system learns to make intelligent decisions on how to handle customer queries by interacting with an environment and improving through feedback.
+This project implements a Reinforcement Learning (RL) environment for automating customer support decision-making.
 
-Unlike traditional rule-based systems or chatbots, this approach focuses on adaptive decision-making, enabling continuous improvement in efficiency and customer satisfaction.
-
+Instead of building a chatbot, this system acts as a decision engine that intelligently determines how to handle incoming customer queries.
 
 ---
 
 Problem Statement
 
-Customer support systems face several challenges:
+Customer support teams receive a large volume of queries daily:
 
-Inefficient routing of queries
+- Some are simple and can be auto-resolved
+- Some are complex and require human intervention
+- Some are urgent and must be escalated immediately
 
-Delayed responses to critical issues
+Manual triaging leads to:
 
-Overuse of human resources for simple tasks
-
-Lack of adaptive learning mechanisms
-
-
+- Inefficient use of resources
+- Increased response time
+- Higher operational costs
 
 ---
 
 Solution
 
-The system models customer support as a sequential decision-making problem where an agent:
+This project introduces a Reinforcement Learning-based system where an agent learns optimal actions for handling customer queries.
 
-Observes the state of a query
+The agent is trained to:
 
-Selects an action
+- Automatically respond to simple queries
+- Ask for clarification when necessary
+- Escalate urgent issues
+- Route queries to appropriate departments
 
-Receives a reward based on outcome and cost
-
-Learns an optimal policy over time
-
-
-
----
-
-Reinforcement Learning Framework
-
-Core Loop:
-
-State → Action → Reward → Next State → Policy Update
-
+The system improves over time using a reward-based learning mechanism.
 
 ---
 
-State Representation
+RL Formulation
 
-Each query is transformed into a structured state consisting of:
+State Space
 
-Sentiment (happy, neutral, angry)
+Each customer query is represented as:
 
-Urgency (low, medium, high)
-
-Complexity (simple, medium, complex)
-
-Step count (for multi-step reasoning)
-
-Previous action (for contextual awareness)
-
-
+{
+  "sentiment": ["positive", "neutral", "negative"],
+  "urgency": ["low", "medium", "high"],
+  "complexity": ["simple", "complex"],
+  "category": ["billing", "technical", "general"]
+}
 
 ---
 
 Action Space
 
-The agent can choose one of the following actions:
-
-AI: Automated response
-
-HUMAN: Assign human agent
-
-ESCALATE: Escalate to higher support level
-
-COMPENSATE: Offer compensation
-
-
+ACTIONS = [
+    "auto_reply",
+    "ask_clarification",
+    "escalate",
+    "route_to_sales",
+    "route_to_tech"
+]
 
 ---
 
-Reward Function
+Reward Design
 
-The reward balances decision quality and operational cost:
+- Correct decisions yield positive rewards
+- Incorrect decisions incur penalties
+- Safe actions such as clarification yield smaller rewards
 
-Reward = Success Score − Action Cost
+Examples:
 
-Correct decisions yield positive rewards
-
-Incorrect decisions incur penalties
-
-Expensive actions reduce net reward
-
-
+- Escalating urgent issues: +1
+- Ignoring urgent issues: -0.5
+- Auto-replying to simple queries: +1
 
 ---
 
-Multi-Step Decision Capability
+Environment Features
 
-The system supports multi-step interactions:
-
-Allows retrying after failure
-
-Enables adaptive strategies
-
-Reflects real-world support workflows
-
-
+- Multi-step episodic environment
+- Randomized customer scenarios
+- Action history tracking
+- Reward-driven learning
+- API-based interaction using FastAPI
 
 ---
 
-Training Methodology
+API Endpoints
 
-Algorithm: Q-Learning
+Reset Environment
 
-Policy: Epsilon-Greedy (exploration vs exploitation)
+POST /reset?task=hard
 
-Learning improves through repeated episodes
+Take Action
 
+POST /step
 
+Request:
 
----
+{
+  "decision": "escalate"
+}
 
-Results
+Get Current State
 
-Early training stages show inconsistent performance
-
-Over time, the agent reduces poor decisions
-
-Reward trends indicate learning and policy improvement.
-
-
----
-
-Key Features
-
-Reinforcement learning-based decision engine
-
-Multi-step reasoning capability
-
-Cost-aware optimization
-
-Learning from interaction rather than static rules
-
-Interpretable decision logic
-
-
+GET /state
 
 ---
 
-Use Cases
+How to Run
 
-E-commerce customer support systems
+Install Dependencies
 
-SaaS support automation
+pip install -r requirements.txt
 
-Banking and financial service helpdesks
+Start API Server
 
-Ticket routing and prioritization systems
+uvicorn app:app --reload
 
-
-
----
-
-Unique Future Scope
-
-This project can evolve into several advanced and impactful directions:
-
-Contextual Memory Across Sessions
-
-Enable the agent to retain user interaction history across sessions for long-term personalization and improved decision continuity.
-
+Access the API documentation at:
+http://127.0.0.1:8000/docs
 
 ---
 
-Hierarchical Reinforcement Learning
+Train the RL Agent
 
-Introduce layered decision-making where high-level policies define strategy and low-level agents execute actions.
-
-
----
-
-Integration with Real-Time Event Streams
-
-Extend the system to operate on live customer data streams, enabling continuous real-time decision-making.
-
+python train.py
 
 ---
 
-Uncertainty-Aware Decision Making
+Run the Agent
 
-Incorporate probabilistic reasoning to allow the agent to act based on confidence levels and risk estimation.
-
-
----
-
-Human-in-the-Loop Reinforcement Learning
-
-Allow human feedback to dynamically refine reward signals and improve alignment with real-world expectations.
-
+python run_agent.py
 
 ---
 
-Multi-Agent Collaboration System
+Sample Output
 
-Develop multiple specialized agents (triage, resolution, escalation) that collaborate to handle complex workflows.
-
-
----
-
-Transfer Learning Across Domains
-
-Adapt trained policies from one domain (e.g., e-commerce) to another (e.g., banking) with minimal retraining.
-
-
----
-
-Policy Explainability Layer
-
-Provide transparent explanations for decisions to improve trust and usability in enterprise systems.
-
+{
+  "observation": {
+    "sentiment": "neutral",
+    "urgency": "high",
+    "complexity": "simple",
+    "category": "general",
+    "step": 2
+  },
+  "reward": 0.7,
+  "done": true
+}
 
 ---
 
-Dynamic Cost Optimization
+Algorithm Used
 
-Adjust action costs dynamically based on operational constraints such as load, time, or resource availability.
+- Q-Learning (Tabular Reinforcement Learning)
 
+Update rule:
 
----
-
-Deep Reinforcement Learning Extension
-
-Replace tabular Q-learning with neural network-based methods (DQN, PPO) for scalability.
-
+Q(state, action) = reward + gamma * max(Q(next_state))
 
 ---
 
-Tech Stack
+Key Highlights
 
-Python
-
-Reinforcement Learning (Q-Learning)
-
-Matplotlib for visualization
-
-
+- Real-world problem focus
+- Custom reinforcement learning environment
+- API-based architecture
+- Structured reward design
+- Scalable approach for automation systems
 
 ---
 
-Why This Project Stands Out
+Future Improvements
 
-Focuses on decision intelligence rather than conversation generation.
+- Replace Q-table with Deep Q-Network (DQN)
+- Integrate real-world customer support datasets
+- Apply NLP for extracting state features from text
+- Develop a monitoring dashboard for decision tracking
 
-Demonstrates true reinforcement learning principles.
+---
 
-Balances business constraints with user experience.
+Author
 
-Shows measurable learning through reward progression.
-
-
+Developed as part of a hackathon project.
 
 ---
 
 Conclusion
 
-This system demonstrates how reinforcement learning can be applied to build adaptive, efficient, and scalable decision engines for real-world workflows, moving beyond static automation toward intelligent systems that improve over time.
+This project demonstrates how reinforcement learning can be applied to decision-making systems in customer support.
+
+It focuses on optimizing operational efficiency by learning from interaction feedback rather than relying on static rules.
 
 
----
+
+
+

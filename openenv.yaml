@@ -1,0 +1,3 @@
+name: customer-support-env
+description: RL-based support triage system
+entrypoint: env:CustomerSupportEnv
