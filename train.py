@@ -63,7 +63,7 @@ for episode in range(episodes):
         if next_state_key not in Q:
             Q[next_state_key] = {a: 0 for a in ACTIONS}
 
-        # 🔥 Q-learning update
+        #  Q-learning update
         Q[state_key][action] = (
             Q[state_key][action]
             + alpha * (
