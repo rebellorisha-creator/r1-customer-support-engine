@@ -1,3 +1,44 @@
-name: customer-support-env
-description: RL-based support triage system
-entrypoint: env:CustomerSupportEnv
+name: customer-support-engine
+description: RL-based customer support triage environment
+version: 1.0
+
+entrypoint:
+  type: http
+  url: https://sxm2222-customer-support-engine-r1.hf.space
+
+endpoints:
+  reset:
+    path: /reset
+    method: POST
+
+  step:
+    path: /step
+    method: POST
+
+  state:
+    path: /state
+    method: GET
+
+observation_space:
+  sentiment: [positive, neutral, negative]
+  urgency: [low, medium, high]
+  complexity: [simple, complex]
+  category: [billing, technical, general]
+  step: integer
+
+action_space:
+  - auto_reply
+  - ask_clarification
+  - escalate
+  - route_to_sales
+  - route_to_tech
+
+reward_range: [0.0, 1.0]
+
+tasks:
+  - name: easy
+    description: Handle simple queries
+  - name: medium
+    description: Handle moderate queries
+  - name: hard
+    description: Handle complex urgent queries
