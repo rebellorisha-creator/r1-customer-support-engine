@@ -1,79 +1,52 @@
 
-import asyncio
-import os
-from openai import OpenAI
-from env import CustomerSupportEnv, Action
+from fastapi import FastAPI
+from pydantic import BaseModel
+from env import CustomerSupportEnv
+import random
 
-API_KEY = os.getenv("HF_TOKEN")
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+app = FastAPI()
 
-
-def log_start():
-    print(f"[START] task=customer_support env=triage model={MODEL_NAME}", flush=True)
+# Initialize environment
+env = CustomerSupportEnv()
 
 
-def log_step(step, action, reward, done):
-    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={str(done).lower()} error=null", flush=True)
+# Request model
+class QueryRequest(BaseModel):
+    query: str
 
 
-def log_end(score):
-    print(f"[END] success=true steps=1 score={score:.2f} rewards={score:.2f}", flush=True)
+# Root endpoint (health check)
+@app.get("/")
+def root():
+    return {"message": "API is working"}
 
 
-async def main():
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-
-    env = CustomerSupportEnv()
-
-    log_start()
-
-    obs = env.reset("urgent complaint")
-
-    action = Action(decision="HUMAN")
-
-    obs, reward, done, _ = env.step(action)
-
-    log_step(1, action.decision, reward, done)
-
-    log_end(reward)
+# Reset endpoint (MANDATORY for checker)
+@app.post("/reset")
+def reset():
+    state = env.reset()
+    return {"state": state}
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
-import os
-from openai import OpenAI
-from test import run_query
+# Inference endpoint
+@app.post("/infer")
+def infer(request: QueryRequest):
 
-#  Dummy OpenAI client (for requirement compliance)
-client = OpenAI(
-    base_url=os.getenv("API_BASE_URL", "dummy"),
-    api_key=os.getenv("HF_TOKEN", "dummy")
-)
+    # Reset with query
+    state = env.reset(request.query)
 
-MODEL_NAME = os.getenv("MODEL_NAME", "dummy")
+    # Choose action (simple logic)
+    action = random.choice([
+        "auto_reply",
+        "ask_clarification",
+        "escalate",
+        "route_to_sales",
+        "route_to_tech"
+    ])
 
+    result = env.step(action)
 
-def main():
-    print("START")
-
-    query = input("Enter query: ")
-
-    print("STEP: processing query")
-
-    result = run_query(query)
-
-    print("STEP: decision made")
-
-    print({
-        "action": result["action"],
-        "state": result["state"],
-        "reward": result["reward"]
-    })
-
-    print("END")
-
-
-if __name__ == "__main__":
-    main()
-
+    return {
+        "action": action,
+        "result": result
+    }
