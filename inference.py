@@ -11,9 +11,10 @@ client = OpenAI(
     api_key=os.environ["API_KEY"]
 )
 
-def get_action_from_llm(state):
 
-    prompt = f"""
+def get_action_from_llm(state):
+    try:
+        prompt = f"""
 You are a customer support agent.
 
 State:
@@ -28,28 +29,30 @@ auto_reply, ask_clarification, escalate, route_to_sales, route_to_tech
 Only return action name.
 """
 
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}]
+        )
 
-    # 🔥 CLEAN OUTPUT (VERY IMPORTANT)
-    action_text = response.choices[0].message.content.strip().lower()
+        action = response.choices[0].message.content.strip().lower()
 
-    valid_actions = [
-        "auto_reply",
-        "ask_clarification",
-        "escalate",
-        "route_to_sales",
-        "route_to_tech"
-    ]
+        valid_actions = [
+            "auto_reply",
+            "ask_clarification",
+            "escalate",
+            "route_to_sales",
+            "route_to_tech"
+        ]
 
-    for a in valid_actions:
-        if a in action_text:
-            return a
+        for a in valid_actions:
+            if a in action:
+                return a
 
-    return "ask_clarification"  # fallback
+        return "ask_clarification"
 
+    except Exception as e:
+        print(f"LLM error: {e}", flush=True)
+        return "ask_clarification"
 
 def run_task():
     print("[START] task=customer_support", flush=True)
@@ -65,7 +68,11 @@ def run_task():
         # ✅ LLM decision
         action = get_action_from_llm(state)
 
-        result = env.step(action)
+        try:
+            result = env.step(action)
+        except Exception as e:
+            print(f"Step error: {e}", flush=True)
+            break
 
         reward = result["reward"]
         total_reward += reward
