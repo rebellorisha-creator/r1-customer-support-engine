@@ -2,4 +2,11 @@
 name = "customer-support-engine"
 version = "1.0.0"
 description = "RL-based customer support triage system"
-dependencies = []
+authors = [{name = "anonymous"}]
+
+dependencies = [
+    "openenv-core>=0.2.0"
+]
+
+[project.scripts]
+server = "app:app"
