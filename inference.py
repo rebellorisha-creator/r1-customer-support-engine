@@ -1,52 +1,52 @@
 
-from fastapi import FastAPI
-from pydantic import BaseModel
 from env import CustomerSupportEnv
 import random
-
-app = FastAPI()
 
 # Initialize environment
 env = CustomerSupportEnv()
 
+def run_task(task_name="customer_support"):
 
-# Request model
-class QueryRequest(BaseModel):
-    query: str
+    # START block
+    print(f"[START] task={task_name}", flush=True)
 
-
-# Root endpoint (health check)
-@app.get("/")
-def root():
-    return {"message": "API is working"}
-
-
-# Reset endpoint (MANDATORY for checker)
-@app.post("/reset")
-def reset():
+    # Reset environment
     state = env.reset()
-    return {"state": state}
+
+    total_reward = 0
+    steps = 0
+
+    done = False
+
+    while not done:
+        steps += 1
+
+        # Choose random action
+        action = random.choice([
+            "auto_reply",
+            "ask_clarification",
+            "escalate",
+            "route_to_sales",
+            "route_to_tech"
+        ])
+
+        result = env.step(action)
+
+        reward = result["reward"]
+        total_reward += reward
+
+        # STEP block
+        print(f"[STEP] step={steps} reward={reward}", flush=True)
+
+        done = result["done"]
+
+    # Calculate score (simple avg reward)
+    score = total_reward / steps if steps > 0 else 0
+
+    # END block
+    print(f"[END] task={task_name} score={score} steps={steps}", flush=True)
 
 
-# Inference endpoint
-@app.post("/infer")
-def infer(request: QueryRequest):
-
-    # Reset with query
-    state = env.reset(request.query)
-
-    # Choose action (simple logic)
-    action = random.choice([
-        "auto_reply",
-        "ask_clarification",
-        "escalate",
-        "route_to_sales",
-        "route_to_tech"
-    ])
-
-    result = env.step(action)
-
-    return {
-        "action": action,
-        "result": result
-    }
+# Run when file is executed
+if __name__ == "__main__":
+    run_task()
