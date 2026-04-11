@@ -2,9 +2,10 @@ import os
 from env import CustomerSupportEnv
 from openai import OpenAI
 
+# Initialize environment
 env = CustomerSupportEnv()
 
-# Initialize client using PROVIDED API
+# Initialize LLM client (IMPORTANT)
 client = OpenAI(
     base_url=os.environ["API_BASE_URL"],
     api_key=os.environ["API_KEY"]
@@ -32,7 +33,22 @@ Only return action name.
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.choices[0].message.content.strip()
+    # 🔥 CLEAN OUTPUT (VERY IMPORTANT)
+    action_text = response.choices[0].message.content.strip().lower()
+
+    valid_actions = [
+        "auto_reply",
+        "ask_clarification",
+        "escalate",
+        "route_to_sales",
+        "route_to_tech"
+    ]
+
+    for a in valid_actions:
+        if a in action_text:
+            return a
+
+    return "ask_clarification"  # fallback
 
 
 def run_task():
@@ -46,6 +62,7 @@ def run_task():
     while not done:
         steps += 1
 
+        # ✅ LLM decision
         action = get_action_from_llm(state)
 
         result = env.step(action)
