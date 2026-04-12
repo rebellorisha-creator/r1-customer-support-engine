@@ -82,7 +82,8 @@ def run_task():
         state = result["observation"]
         done = result["done"]
 
-    score = total_reward / steps if steps > 0 else 0
+        raw_score = total_reward / steps if steps > 0 else 0.5
+        score = max(0.01, min(0.99, raw_score))
 
     print(f"[END] task=customer_support score={score} steps={steps}", flush=True)
 
